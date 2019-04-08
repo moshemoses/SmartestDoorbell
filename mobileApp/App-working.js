@@ -1,9 +1,15 @@
 import React from "react";
-import { Text, View, FlatList } from "react-native";
+import {
+  StyleSheet,
+  Text,
+  View,
+  TextInput,
+  TouchableOpacity
+} from "react-native";
+import { Permissions, Notifications } from "expo";
 
 import StreamView from "./StreamView";
-import History from "./History";
-import { Permissions, Notifications } from "expo";
+
 const PUSH_REGISTRATION_ENDPOINT =
   "https://pidoorbellserver.herokuapp.com/token";
 const MESSAGE_ENPOINT = "https://pidoorbellserver.herokuapp.com/message";
@@ -11,17 +17,30 @@ const MESSAGE_ENPOINT = "https://pidoorbellserver.herokuapp.com/message";
 export default class App extends React.Component {
   state = {
     notification: null,
-    messageText: "",
-    View: "Video"
+    messageText: ""
   };
 
   handleNotification = notification => {
     this.setState({ notification });
   };
 
-  async handlePress(word) {
-    await this.setState({ View: word });
-  }
+  handleChangeText = text => {
+    this.setState({ messageText: text });
+  };
+
+  sendMessage = async () => {
+    fetch(MESSAGE_ENPOINT, {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        message: this.state.messageText
+      })
+    });
+    this.setState({ messageText: "" });
+  };
 
   registerForPushNotificationsAsync = async () => {
     const { status } = await Permissions.askAsync(Permissions.NOTIFICATIONS);
@@ -51,6 +70,10 @@ export default class App extends React.Component {
     );
   };
 
+  componentDidMount() {
+    this.registerForPushNotificationsAsync();
+  }
+
   renderNotification() {
     return (
       <View style={styles.container}>
@@ -60,52 +83,45 @@ export default class App extends React.Component {
     );
   }
 
-  componentDidMount() {
-    this.registerForPushNotificationsAsync();
-  }
-
   render() {
     return (
-      <View style={{ flex: 1, marginTop: 10 }}>
-        <View
-          style={{
-            flex: 0.2,
-            flexDirection: "row",
-            backgroundColor: "#6196ed",
-            marginTop: 17,
-            padding: 10,
-            textAlign: "center",
-            alignItems: "center",
-            justifyContent: "center"
-          }}
-        >
-          <Text
-            style={{ padding: 30, margin: 20, backgroundColor: "#156af2" }}
-            onPress={() => {
-              this.handlePress("Video");
-            }}
-          >
-            Video
-          </Text>
+      <View style={styles.container}>
+        <Text>Above</Text>
+        <View>
+          <Text>Smartest Doorbell Ever!</Text>
+          <StreamView />
+        </View>
 
-          <Text
-            style={{ padding: 30, margin: 20, backgroundColor: "#156af2" }}
-            onPress={() => {
-              this.handlePress("History");
-            }}
-          >
-            History
-          </Text>
-        </View>
-        <View style={{ flex: 1 }}>
-          {this.state.View === "Video" ? (
-            <StreamView style={{ flex: 1 }} />
-          ) : (
-            <History />
-          )}
-        </View>
-        {this.state.notification ? this.renderNotification() : null}
+        <Text>Beneath</Text>
+        {/* {this.state.notification ? this.renderNotification() : null} */}
       </View>
     );
   }
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "white",
+    alignItems: "center",
+    justifyContent: "center"
+  },
+  textInput: {
+    height: 50,
+    width: 300,
+    borderColor: "#f6f6f6",
+    borderWidth: 1,
+    backgroundColor: "#fff",
+    padding: 10
+  },
+  button: {
+    padding: 10
+  },
+  buttonText: {
+    fontSize: 18,
+    color: "#fff"
+  },
+  label: {
+    fontSize: 18
+  }
+});
